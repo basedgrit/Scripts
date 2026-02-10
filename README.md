@@ -1,0 +1,1 @@
+This repo is a grab-bag of small projects and experiments I’ve built—things like mini apps, scripts, prototypes, and proof-of-concepts. It’s basically my scratchpad for ideas: some projects are more polished than others, and a few may be works-in-progress.
