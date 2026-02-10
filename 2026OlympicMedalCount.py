@@ -257,24 +257,112 @@ HTML_TEMPLATE = """<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MC 2026 • Top 3 Gold</title>
   <style>
-    body { font-family: system-ui, Segoe UI, Arial, sans-serif; margin: 18px; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; max-width: 420px; }
-    .title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-    .meta { color: #555; font-size: 12px; margin-bottom: 10px; }
-    .row { display: flex; justify-content: space-between; font-size: 18px; padding: 8px 0; border-top: 1px solid #eee; }
-    .row:first-of-type { border-top: none; }
-    .left { display: flex; align-items: center; gap: 6px; }
-    .flagimg{
-      width: 20px;
-      height: 14px;
-      border-radius: 2px;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
-      flex: 0 0 auto;
-    }
-    button { padding: 7px 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
-    button:hover { background: #f6f6f6; }
-    .err { color: #b00020; font-size: 12px; margin-top: 10px; white-space: pre-wrap; }
-  </style>
+  :root{
+    /* responsive sizing knobs */
+    --pad: clamp(8px, 3vw, 18px);
+    --radius: clamp(10px, 2.5vw, 16px);
+
+    --title: clamp(14px, 3.4vw, 22px);
+    --meta: clamp(10px, 2.2vw, 14px);
+    --row: clamp(14px, 3.8vw, 24px);
+
+    --flagw: clamp(18px, 5.5vw, 30px); /* flag width scales with window */
+    --gap: clamp(6px, 1.6vw, 10px);
+  }
+
+  body {
+    font-family: system-ui, Segoe UI, Arial, sans-serif;
+    margin: var(--pad);
+  }
+
+  /* Fill the available window */
+  .card {
+    width: calc(100vw - (var(--pad) * 2));
+    height: calc(100vh - (var(--pad) * 2));
+    max-width: none;
+
+    border: 1px solid #ddd;
+    border-radius: var(--radius);
+    padding: var(--pad);
+
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  .title {
+    font-size: var(--title);
+    font-weight: 700;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .meta {
+    color: #555;
+    font-size: var(--meta);
+    margin-bottom: 10px;
+  }
+
+  /* Rows container grows/shrinks with window */
+  #rows {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: var(--row);
+    padding: 8px 0;
+    border-top: 1px solid #eee;
+    line-height: 1.1;
+  }
+  .row:first-of-type { border-top: none; }
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    min-width: 0;
+  }
+
+  .left span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .flagimg{
+    width: var(--flagw);
+    aspect-ratio: 4 / 3;   /* matches 24x18 */
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+    flex: 0 0 auto;
+  }
+
+  button {
+    margin-top: var(--pad);
+    padding: clamp(6px, 1.8vw, 10px) clamp(10px, 2.4vw, 14px);
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+    font-size: var(--meta);
+    align-self: flex-start;
+  }
+  button:hover { background: #f6f6f6; }
+
+  .err {
+    color: #b00020;
+    font-size: var(--meta);
+    margin-top: 10px;
+    white-space: pre-wrap;
+  }
+</style>
+
 </head>
 <body>
   <div class="card">
