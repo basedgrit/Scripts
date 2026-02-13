@@ -6,13 +6,15 @@ root = tk.Tk()
 root.title("Deck Builder")
 root.geometry("900x600")
 
-state = {"player_hp": 50, "player_block": 0, "player_energy": 3, "enemy_hp": 30, "turn": 1, "enemy_damage": 7, 
+state = {"player_hp": 50, "player_block": 0, "player_energy": 3, "enemy_hp": 30, "turn": 1, "enemy_damage": 7,"mode":"combat", "reward_open": False,
         "deck":["Strike","Strike","Strike","Strike","Strike","Defend","Defend","Defend","Defend","Defend"], "draw_pile":[], "hand":[], "discard_pile":[]}
-
 STRIKE_COST = 1
 STRIKE_DAMAGE = 6
 DEFEND_COST = 1
 DEFEND_BLOCK = 5
+card_costs = {"Strike": STRIKE_COST, "Defend": DEFEND_COST, "Big Strike": 2, "Shield Up": 1, "Heal": 1, "Zap": 0, "Gamble": 0}
+rewards = ["Big Strike", "Shield Up", "Heal", "Zap", "Gamble"]
+
 
 def update_status():
     text = f"HP:{state['player_hp']} | Block:{state['player_block']} | Energy:{state['player_energy']} | Enemy HP: {state['enemy_hp']}"
@@ -23,6 +25,13 @@ def log_line(message):
     log.insert("end", message + "\n")
     log.see("end")
 
+def get_cost(card):
+    if card == "Strike":
+        return STRIKE_COST
+    elif card == "Defend":
+        return DEFEND_COST
+    else:
+        return 0
 
 ### Turn Loop
 def end_turn():
@@ -92,6 +101,9 @@ def render_hand():
     for index, card in enumerate(state["hand"]):
         card_button = tk.Button(hand_frame, text=card + " (1)", command=lambda c=card, i=index: play_card(c, i))
         card_button.pack(side="left", padx=5, pady=5)
+        if state["player_energy"] < get_cost(card):
+            card_button.config(state="disabled")
+    
 
 def play_card(card, index):
     if state["player_energy"] < STRIKE_COST and card == "Strike":
@@ -107,8 +119,13 @@ def play_card(card, index):
     else:
         log_line(f"Unknown card: {card}")
         return
-    state["discard_pile"].append(state["hand"].pop(index))
+    state["discard_pile"].append(state["hand"].pop(index)) ##TODO: FIX
     render_hand()
+
+    if state["enemy_hp"] <= 0:
+        log_line("Enemy defeated!")
+        state["mode"] = "reward"
+        show_rewards()
 
 def setup_combat():
     state["draw_pile"], state["hand"] = [], []
@@ -122,6 +139,46 @@ def setup_combat():
     render_hand()
     update_status()
 
+def show_rewards():
+    state["hand"].clear()
+    log_line("Choose a reward card:")
+    for reward in rewards:
+        reward_button = tk.Button(hand_frame, text=reward, command=lambda r=reward: choose_reward(r))
+        reward_button.pack(side="left", padx=5, pady=5)
+    
+
+def choose_reward(reward, popup):
+    state["deck"].append(reward)
+    log_line(f"Player chooses reward: {reward}")
+    state["mode"] = "combat"
+    popup.destroy()
+    state["reward_open"] = False
+    setup_combat()
+
+
+def open_reward_popup():
+    if state["reward_open"]:
+        return
+    else:
+        state["reward_open"] = True
+        popup = tk.Toplevel(root)
+        popup.title("Choose Your Reward")
+        popup.geometry("420x220")
+
+        popup.transient(root)
+        popup.grab_set()
+        tk.Label(popup, text="Choose a reward card:").pack(pady=10)
+        rewards_to_show = random.sample(rewards, 3)
+        for reward in rewards_to_show:
+            tk.Button(popup, text=reward, command=lambda r=reward: choose_reward(r,popup)).pack(side="left", padx=5, pady=5)
+
+        popup.protocol("WM_DELETE_WINDOW", lambda: on_closing())
+def on_closing():
+    ##disable closing if reward popup is open
+    if state["reward_open"]:
+        log_line("Please choose a reward before closing.")
+    else:
+        root.destroy()
 ### Status Bar
 status = tk.Label(root, text="Loading...")
 status.pack(fill="x")
