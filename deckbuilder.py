@@ -1,12 +1,13 @@
 import tkinter as tk
-
+import random
 
 
 root = tk.Tk()
 root.title("Deck Builder")
 root.geometry("900x600")
 
-state = {"player_hp": 50, "player_block": 0, "player_energy": 3, "enemy_hp": 30, "turn": 1, "enemy_damage": 7}
+state = {"player_hp": 50, "player_block": 0, "player_energy": 3, "enemy_hp": 30, "turn": 1, "enemy_damage": 7, 
+        "deck":["Strike","Strike","Strike","Strike","Strike","Defend","Defend","Defend","Defend","Defend"], "draw_pile":[], "hand":[], "discard_pile":[]}
 
 STRIKE_COST = 1
 STRIKE_DAMAGE = 6
@@ -26,8 +27,12 @@ def log_line(message):
 ### Turn Loop
 def end_turn():
     log_line("Player ends turn.")
+    state["discard_pile"].extend(state["hand"])
+    state["hand"].clear()
     enemy_attack()
     start_new_turn()
+    draw_cards(5)
+    render_hand()
     update_status()
 
 def enemy_attack():
@@ -66,6 +71,57 @@ def play_defend():
     log_line(f"Player plays Defend and gains {DEFEND_BLOCK} block!")
     update_status()
 
+
+def draw_cards(n):
+    for _ in range(n):
+        if not state["draw-pile"]:
+            state["draw-pile"] = state["discard_pile"].copy()
+            state["discard_pile"].clear()
+            random.shuffle(state["draw-pile"])
+            if not state["draw-pile"]:
+                log_line("No cards left to draw!")
+                return
+        card = state["draw-pile"].pop()
+        state["hand"].append(card)
+        log_line(f"Player draws {card}.")
+
+def render_hand():
+    for widget in hand_frame.winfo_children():
+        if widget not in [hand_label, strike_button, defend_button, end_button]:
+            widget.destroy()
+    for index, card in enumerate(state["hand"]):
+        card_button = tk.Button(hand_frame, text=card + " (1)", command=lambda c=card, i=index: play_card(c, i))
+        card_button.pack(side="left", padx=5, pady=5)
+
+def play_card(card, index):
+    if state["player_energy"] < STRIKE_COST and card == "Strike":
+        log_line("Not enough energy to play Strike!")
+        return
+    if state["player_energy"] < DEFEND_COST and card == "Defend":
+        log_line("Not enough energy to play Defend!")
+        return
+    if card == "Strike":
+        play_strike()
+    elif card == "Defend":
+        play_defend()
+    else:
+        log_line(f"Unknown card: {card}")
+        return
+    state["discard_pile"].append(state["hand"].pop(index))
+    render_hand()
+
+def setup_combat():
+    state["draw_pile"], state["hand"] = [], []
+    state["draw-pile"] = state["deck"].copy()
+
+    random.shuffle(state["draw-pile"])
+
+    state["enemy_hp"] = 30
+    start_new_turn()
+    draw_cards(5)
+    render_hand()
+    update_status()
+
 ### Status Bar
 status = tk.Label(root, text="Loading...")
 status.pack(fill="x")
@@ -86,14 +142,14 @@ hand_label.pack(pady=10)
 
 ###Strike Button
 strike_button = tk.Button(hand_frame, text="Strike (1)", command=play_strike)
-strike_button.pack(side="left", padx=10, pady=10)
+
 
 ###Defend Button
 defend_button = tk.Button(hand_frame, text="Defend (1)", command=play_defend)
-defend_button.pack(side="left", padx=10, pady=10)
+
 ### End Button
 end_button = tk.Button(hand_frame, text="End Turn", command=end_turn)
 end_button.pack(side="left",padx=10,pady=10)
 
-
+setup_combat()
 root.mainloop()
