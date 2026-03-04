@@ -5,7 +5,7 @@ import argparse
 import sys
 
 
-# Mapping: folder -> set of extensions (lowercase, no dot)
+# Which file endings belong in each folder.
 EXT_MAP = {
     "Images": {"jpg", "jpeg", "png", "gif", "bmp", "webp", "heic", "tiff", "svg"},
     "Video": {"mp4", "mov", "mkv", "avi", "wmv", "webm"},
@@ -21,7 +21,7 @@ EXT_MAP = {
 
 
 def category_for(ext: str) -> str:
-    """Return category name for an extension, or 'Other'."""
+    """Pick a folder name for this file ending. Use 'Other' if unknown."""
     ext = ext.lower().lstrip(".")
     for folder, exts in EXT_MAP.items():
         if ext in exts:
@@ -30,7 +30,7 @@ def category_for(ext: str) -> str:
 
 
 def unique_path(dest_dir: Path, filename: str) -> Path:
-    """Return a non-colliding Path in `dest_dir` (append " (n)" if needed)."""
+    """Choose a file path that does not overwrite an existing file."""
     p = dest_dir / filename
     if not p.exists():
         return p
@@ -44,7 +44,7 @@ def unique_path(dest_dir: Path, filename: str) -> Path:
 
 
 def organize(folder: Path, dry_run: bool) -> int:
-    """Organize top-level files into type-named subfolders. Return moved count."""
+    """Sort files in this folder into subfolders and report how many moved."""
     if not folder.exists():
         raise FileNotFoundError(f"Folder not found: {folder}")
 
@@ -59,7 +59,7 @@ def organize(folder: Path, dry_run: bool) -> int:
         dest_dir = folder / cat
         target = unique_path(dest_dir, item.name)
 
-        # Already in correct folder
+        # Skip it if it is already where it belongs.
         if item.parent == dest_dir:
             continue
 
@@ -80,7 +80,7 @@ def organize(folder: Path, dry_run: bool) -> int:
 
 
 def main():
-    """CLI: organize a folder (default: ~/Downloads)."""
+    """Read options from the command line and start sorting files."""
     parser = argparse.ArgumentParser(description="Organize a folder into type-based subfolders.")
     parser.add_argument("--path", type=str, default=str(Path.home() / "Downloads"),
                         help="Folder to organize (default: ~/Downloads)")
